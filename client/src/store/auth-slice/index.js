@@ -4,7 +4,8 @@ import axios from "axios";
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
-  user: null,
+  user: null, 
+  token : null,
 };
 
 export const registerUser = createAsyncThunk(
@@ -55,13 +56,33 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// export const checkAuth = createAsyncThunk(
+//   "/auth/checkauth",
+
+//   async () => {
+//     const response = await axios.get(
+//       `${import.meta.env.VITE_API_URL}/api/auth/check-auth`,
+//       {
+//         withCredentials: true,
+//         headers: {
+//           "Cache-Control":
+//             "no-store, no-cache, must-revalidate, proxy-revalidate",
+//         },
+//       }
+//     );
+
+//     return response.data;
+//   }
+// );
+
 export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
 
-  async () => {
+  async (token) => {
     const response = await axios.get(
       `${import.meta.env.VITE_API_URL}/api/auth/check-auth`,
       {
+        Authorization: `Bearer ${token}`,
         withCredentials: true,
         headers: {
           "Cache-Control":
@@ -78,7 +99,12 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser: (state, action) => {},
+    setUser: (state, action) => { },
+    resetTokenAndCredentials: (state) => {
+      state.isAuthenticated = false;
+      state.user = null;
+      state.token = null;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -89,11 +115,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
+        state.token = action.payload.token;
+        sessionStorage.setItem('token', JSON.stringify(action.payload.token));
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
+        state.token = null;
       })
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
@@ -131,5 +160,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser } = authSlice.actions;
+export const { setUser, resetTokenAndCredentials } = authSlice.actions;
 export default authSlice.reducer;
