@@ -19,17 +19,14 @@ function ProductImageUpload({
 }) {
   const inputRef = useRef(null);
 
+  console.log(isEditMode, "isEditMode");
+
   function handleImageFileChange(event) {
+    console.log(event.target.files, "event.target.files");
     const selectedFile = event.target.files?.[0];
-    if (
-      selectedFile &&
-      ["image/png", "image/jpeg"].includes(selectedFile.type) &&
-      selectedFile.size <= 5 * 1024 * 1024 // <= 5MB
-    ) {
-      setImageFile(selectedFile);
-    } else {
-      alert("Invalid file type or size. Only PNG/JPEG under 5MB is allowed.");
-    }
+    console.log(selectedFile);
+
+    if (selectedFile) setImageFile(selectedFile);
   }
 
   function handleDragOver(event) {
@@ -39,15 +36,7 @@ function ProductImageUpload({
   function handleDrop(event) {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files?.[0];
-    if (
-      droppedFile &&
-      ["image/png", "image/jpeg"].includes(droppedFile.type) &&
-      droppedFile.size <= 5 * 1024 * 1024
-    ) {
-      setImageFile(droppedFile);
-    } else {
-      alert("Invalid file. Only PNG/JPEG under 5MB is allowed.");
-    }
+    if (droppedFile) setImageFile(droppedFile);
   }
 
   function handleRemoveImage() {
@@ -66,28 +55,26 @@ function ProductImageUpload({
         `${import.meta.env.VITE_API_URL}/api/admin/products/upload-image`,
         data
       );
+
       if (response?.data?.success) {
         setUploadedImageUrl(response.data.result.url);
       } else {
-        console.error("Upload failed:", response.data);
+        console.error("Image upload failed:", response?.data?.message);
       }
     } catch (error) {
-      console.error("Error during upload:", error);
-      alert("Image upload failed. Please try again.");
+      console.error("Error uploading image:", error.message);
     } finally {
       setImageLoadingState(false);
     }
   }
 
   useEffect(() => {
-    if (imageFile) {
-      uploadImageToCloudinary();
-    }
+    if (imageFile !== null) uploadImageToCloudinary();
   }, [imageFile]);
 
   return (
     <div
-      className={`w-full mt-4 ${isCustomStyling ? "" : "max-w-md mx-auto"}`}
+      className={`w-full  mt-4 ${isCustomStyling ? "" : "max-w-md mx-auto"}`}
     >
       <Label className="text-lg font-semibold mb-2 block">Upload Image</Label>
       <div
@@ -128,7 +115,6 @@ function ProductImageUpload({
               size="icon"
               className="text-muted-foreground hover:text-foreground"
               onClick={handleRemoveImage}
-              disabled={isEditMode} // Disable button in edit mode
             >
               <XIcon className="w-4 h-4" />
               <span className="sr-only">Remove File</span>
@@ -140,23 +126,15 @@ function ProductImageUpload({
   );
 }
 
-// PropTypes declaration
 ProductImageUpload.propTypes = {
-  imageFile: PropTypes.instanceOf(File), // File object for image
-  setImageFile: PropTypes.func.isRequired, // Function to update imageFile
-  imageLoadingState: PropTypes.bool.isRequired, // Loading state of the image
-  uploadedImageUrl: PropTypes.string, // Uploaded image URL
-  setUploadedImageUrl: PropTypes.func.isRequired, // Function to update uploaded image URL
-  setImageLoadingState: PropTypes.func.isRequired, // Function to update loading state
-  isEditMode: PropTypes.bool.isRequired, // Indicates if component is in edit mode
-  isCustomStyling: PropTypes.bool, // Optional custom styling flag
-};
-
-// Default props for optional props
-ProductImageUpload.defaultProps = {
-  imageFile: null,
-  uploadedImageUrl: "",
-  isCustomStyling: false,
+  imageFile: PropTypes.object, // `imageFile` là đối tượng File
+  setImageFile: PropTypes.func.isRequired, // Hàm để cập nhật `imageFile`
+  imageLoadingState: PropTypes.bool.isRequired, // Trạng thái tải ảnh
+  uploadedImageUrl: PropTypes.string.isRequired, // URL ảnh sau khi tải lên
+  setUploadedImageUrl: PropTypes.func.isRequired, // Hàm cập nhật URL ảnh
+  setImageLoadingState: PropTypes.func.isRequired, // Hàm cập nhật trạng thái tải
+  isEditMode: PropTypes.bool.isRequired, // Xác định xem có đang chỉnh sửa không
+  isCustomStyling: PropTypes.bool, // Có sử dụng style tùy chỉnh không
 };
 
 export default ProductImageUpload;
